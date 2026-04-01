@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Results · IIT TTC April 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .podium-section { padding: 20px; }
+    .podium-section h2 { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.04em; margin-bottom:12px; }
+    .podium-level { margin-top:5px; font-size:0.75rem; color:var(--muted); }
+
+    .div-section { padding: 18px 20px; border-top: 1px solid var(--border); }
+    .div-section h2 { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.04em; margin-bottom:10px; }
+    .div-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
+    .div-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+    .div-card-header { padding:9px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.8rem; letter-spacing:0.07em; text-transform:uppercase; border-bottom:1px solid var(--border); }
+    .div-card-header.advanced     { background:rgba(30,58,110,0.4); color:#93c5fd; }
+    .div-card-header.intermediate { background:rgba(20,83,45,0.4);  color:#86efac; }
+    .div-card-header.beginner     { background:rgba(69,26,3,0.4);   color:#fbbf24; }
+    .div-row { display:flex; align-items:center; padding:9px 14px; gap:9px; border-bottom:1px solid var(--border); }
+    .div-row:last-child { border-bottom:none; }
+    .div-row .div-rank { font-size:1.1rem; min-width:24px; }
+    .div-row .div-name { font-weight:600; font-size:0.88rem; flex:1; }
+    .div-row .div-name.tbd { color:var(--muted); font-style:italic; font-weight:400; }
+
+    .history-section { padding: 18px 20px; border-top: 1px solid var(--border); }
+    .history-section h2 { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.04em; margin-bottom:10px; }
+    .history-list { display:flex; flex-direction:column; gap:5px; }
+    .history-item {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:8px 12px;
+      display:flex; align-items:center; gap:8px; font-size:0.83rem;
+      flex-wrap: wrap;
+    }
+    .history-item .h-round { font-size:0.7rem; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-weight:700; flex-shrink:0; }
+    .history-item .h-score { font-family:'Barlow Condensed',sans-serif; font-weight:700; color:var(--score-txt); min-width:44px; text-align:center; flex-shrink:0; }
+    .history-item .h-winner { color:#4ade80; font-weight:600; flex:1; min-width:80px; }
+    .history-item .h-loser  { color:var(--muted); flex:1; min-width:80px; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="logo">🏓 IIT TTC</a>
+    <a href="index.html">Home</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="bracket.html">Bracket</a>
+    <a href="results.html" class="active">Results</a>
+    <div class="spacer"></div>
+    <button class="share-btn" onclick="copyShareUrl()">📋 Share</button>
+  </nav>
+
+  <div class="page-header">
+    <h1>Results & Standings</h1>
+    <p>Live standings — updates as matches are completed.</p>
+  </div>
+
+  <div class="podium-section">
+    <h2>🏆 Tournament Podium</h2>
+    <div class="podium">
+      <div class="podium-spot second">
+        <span class="podium-medal">🥈</span>
+        <div class="podium-place">2nd Place</div>
+        <div class="podium-name tbd" id="place-2">In progress...</div>
+        <div class="podium-level" id="place-2-level"></div>
+      </div>
+      <div class="podium-spot first">
+        <span class="podium-medal">🥇</span>
+        <div class="podium-place">1st Place</div>
+        <div class="podium-name tbd" id="place-1">In progress...</div>
+        <div class="podium-level" id="place-1-level"></div>
+      </div>
+      <div class="podium-spot third">
+        <span class="podium-medal">🥉</span>
+        <div class="podium-place">3rd Place</div>
+        <div class="podium-name tbd" id="place-3">In progress...</div>
+        <div class="podium-level" id="place-3-level"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="div-section">
+    <h2>Division Winners</h2>
+    <div class="div-grid">
+      <div class="div-card">
+        <div class="div-card-header advanced">🎯 Advanced · Seeds 1–9</div>
+        <div class="div-row"><span class="div-rank">🥇</span><span class="div-name tbd" id="div-adv-1">In progress...</span></div>
+        <div class="div-row"><span class="div-rank">🥈</span><span class="div-name tbd" id="div-adv-2">—</span></div>
+      </div>
+      <div class="div-card">
+        <div class="div-card-header intermediate">📗 Intermediate · Seeds 10–23</div>
+        <div class="div-row"><span class="div-rank">🥇</span><span class="div-name tbd" id="div-int-1">In progress...</span></div>
+        <div class="div-row"><span class="div-rank">🥈</span><span class="div-name tbd" id="div-int-2">—</span></div>
+      </div>
+      <div class="div-card">
+        <div class="div-card-header beginner">📘 Beginner · Seeds 24–27</div>
+        <div class="div-row"><span class="div-rank">🥇</span><span class="div-name tbd" id="div-beg-1">In progress...</span></div>
+        <div class="div-row"><span class="div-rank">🥈</span><span class="div-name tbd" id="div-beg-2">—</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:0.78rem;color:var(--muted);line-height:1.6;">
+      ℹ️ Division winner = last player from each group still active in the bracket. Runner-up = player who advanced furthest before elimination.
+    </div>
+  </div>
+
+  <div class="history-section">
+    <h2>📋 Completed Matches</h2>
+    <div class="history-list" id="history-list">
+      <div style="color:var(--muted);font-size:0.85rem;">No matches completed yet.</div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="state.js"></script>
+  <script>
+    let state = loadState();
+
+    onStateChange(newState => {
+      state = newState;
+      render();
+      showToast('📡 Updated by another device', 'info');
+    });
+
+    function getName(id) {
+      if (!id) return null;
+      const p = PLAYERS.find(x => x.id === id);
+      return p ? p.name + (p.nickname ? ` (${p.nickname})` : '') : null;
+    }
+
+    function getLevelLabel(id) {
+      if (!id) return '';
+      const p = PLAYERS.find(x => x.id === id);
+      if (!p) return '';
+      const cls = p.level === 'advanced' ? 'badge-wb' : p.level === 'intermediate' ? 'badge-day2' : 'badge-day3';
+      const label = p.level.charAt(0).toUpperCase() + p.level.slice(1);
+      return `<span class="badge ${cls}">${label}</span>`;
+    }
+
+    function render() {
+      const { allMatches, results } = computeBracket(state);
+      const standings = computeStandings(state, allMatches);
+
+      function setPodium(elId, levelId, playerId) {
+        const el = document.getElementById(elId);
+        const lel = document.getElementById(levelId);
+        if (playerId) {
+          el.textContent = getName(playerId);
+          el.classList.remove('tbd');
+          lel.innerHTML = getLevelLabel(playerId);
+        } else {
+          el.textContent = 'In progress...';
+          el.classList.add('tbd');
+          if (lel) lel.innerHTML = '';
+        }
+      }
+
+      setPodium('place-1', 'place-1-level', standings.first);
+      setPodium('place-2', 'place-2-level', standings.second);
+      setPodium('place-3', 'place-3-level', standings.third);
+
+      // Division standings — rank players by how far they advanced
+      const roundOrder = ['WB-R1','LB-R1','WB-R2','LB-R2','WB-QF','LB-R3','WB-SF','LB-R4','LB-SF','WB-F','LB-F','GF'];
+
+      function setDiv(prefix, div) {
+        const inLevel = PLAYERS.filter(p => p.level === div);
+        const eliminated = {};
+
+        allMatches.forEach(m => {
+          const r = results[m.id];
+          if (!r?.complete || r.auto) return;
+          const loser = m.p1 === r.winner ? m.p2 : m.p1;
+          if (!loser) return;
+          const lp = PLAYERS.find(x => x.id === loser);
+          if (!lp || lp.level !== div) return;
+          eliminated[loser] = roundOrder.indexOf(m.round);
+        });
+
+        // Sort: not eliminated (999) first, then by highest round reached
+        const sorted = [...inLevel].sort((a, b) => {
+          const ea = eliminated[a.id] ?? 999;
+          const eb = eliminated[b.id] ?? 999;
+          return eb - ea;
+        });
+
+        const el1 = document.getElementById(`div-${prefix}-1`);
+        const el2 = document.getElementById(`div-${prefix}-2`);
+
+        if (sorted[0]) {
+          el1.textContent = sorted[0].name + (sorted[0].nickname ? ` (${sorted[0].nickname})` : '');
+          el1.classList.remove('tbd');
+        }
+        if (sorted[1]) {
+          el2.textContent = sorted[1].name + (sorted[1].nickname ? ` (${sorted[1].nickname})` : '');
+          el2.classList.remove('tbd');
+        }
+      }
+
+      setDiv('adv', 'advanced');
+      setDiv('int', 'intermediate');
+      setDiv('beg', 'beginner');
+
+      // Match history
+      const completedMatches = allMatches
+        .filter(m => results[m.id]?.complete && !results[m.id]?.auto)
+        .sort((a, b) => {
+          const order = ['WB-R1','WB-R2','WB-QF','WB-SF','WB-F','LB-R1','LB-R2','LB-R3','LB-R4','LB-SF','LB-F','GF'];
+          return order.indexOf(a.round) - order.indexOf(b.round);
+        });
+
+      const histList = document.getElementById('history-list');
+      if (completedMatches.length > 0) {
+        histList.innerHTML = completedMatches.map(m => {
+          const r = results[m.id];
+          const winner = r.winner;
+          const loser = m.p1 === winner ? m.p2 : m.p1;
+          const wname = getName(winner) || '?';
+          const lname = getName(loser) || '?';
+          const roundType = m.round.startsWith('WB') ? 'wb' : m.round === 'GF' ? 'gf' : 'lb';
+          return `<div class="history-item">
+            <span class="h-round"><span class="badge badge-${roundType}">${ROUND_LABELS[m.round]||m.round}</span></span>
+            <span class="h-winner">${wname}</span>
+            <span class="h-score">${r.score1}–${r.score2}</span>
+            <span class="h-loser">${lname}</span>
+          </div>`;
+        }).join('');
+      } else {
+        histList.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;">No matches completed yet.</div>';
+      }
+    }
+
+    function copyShareUrl() {
+      navigator.clipboard.writeText(window.location.href).then(() => showToast('Link copied!', 'success'));
+    }
+
+    function showToast(msg, type='info') {
+      const t = document.createElement('div');
+      t.className = `toast ${type}`; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    render();
+  </script>
+</body>
+</html>

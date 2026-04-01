@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>IIT TTC April Tournament 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Firebase for real-time sync -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .hero {
+      padding: 36px 20px 28px;
+      border-bottom: 1px solid var(--border);
+      background: radial-gradient(ellipse at 60% 0%, rgba(232,160,32,0.07) 0%, transparent 60%);
+    }
+    .hero-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 0.78rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 8px;
+    }
+    .hero h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: clamp(2rem, 7vw, 3rem);
+      line-height: 1.05; letter-spacing: 0.01em; margin-bottom: 10px;
+    }
+    .hero-sub { color: var(--muted); font-size: 0.95rem; max-width: 400px; line-height: 1.6; }
+    .hero-meta { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; align-items: center; gap: 5px; font-size: 0.83rem; color: var(--muted); }
+
+    .sync-banner {
+      background: rgba(22,163,74,0.08);
+      border-bottom: 1px solid rgba(22,163,74,0.2);
+      padding: 8px 20px;
+      font-size: 0.8rem;
+      color: #86efac;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sync-banner.warn { background: rgba(217,119,6,0.08); border-color: rgba(217,119,6,0.2); color: #fcd34d; }
+    .sync-dot { width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:pulse 2s infinite; }
+    .sync-dot.offline { background:#f87171; animation:none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; padding: 20px;
+    }
+    .nav-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 16px;
+      text-decoration: none; color: var(--text);
+      transition: all 0.15s ease; display: flex;
+      flex-direction: column; gap: 6px;
+    }
+    .nav-card:hover { border-color: var(--accent); background: var(--surface2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .nav-card .nav-icon { font-size: 1.6rem; }
+    .nav-card .nav-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.05rem; }
+    .nav-card .nav-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+    .nav-card .nav-cta { margin-top: auto; color: var(--accent); font-size: 0.78rem; font-weight: 600; padding-top: 6px; }
+
+    .progress-banner {
+      margin: 0 20px 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+    }
+    .progress-banner h3 {
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .progress-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .progress-chip {
+      padding: 4px 10px; border-radius: var(--radius); font-size: 0.78rem;
+      font-weight: 600; background: var(--surface2); border: 1px solid var(--border);
+    }
+    .progress-chip.done { background: rgba(22,163,74,0.15); border-color: rgba(22,163,74,0.4); color: #4ade80; }
+    .progress-chip.active { background: rgba(232,160,32,0.15); border-color: rgba(232,160,32,0.4); color: var(--accent2); }
+    .progress-chip.pending { color: var(--muted); }
+
+    .constraints-section { padding: 0 20px 20px; }
+    .constraints-section h2 { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1rem; margin-bottom:10px; }
+    .roster-section { padding: 0 20px 28px; }
+    .roster-section h2 { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1rem; margin-bottom:10px; }
+    .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 7px; }
+    .roster-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 7px 11px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .roster-item .seed { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.82rem; color:var(--muted); min-width:22px; }
+    .roster-item .rname { font-size:0.84rem; font-weight:500; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #last-updated { font-size:0.72rem; color:var(--muted); margin-top:7px; }
+
+    @media(max-width:480px) {
+      .nav-grid { grid-template-columns: 1fr 1fr; }
+      .roster-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="logo">🏓 IIT TTC</a>
+    <a href="index.html" class="active">Home</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="bracket.html">Bracket</a>
+    <a href="results.html">Results</a>
+    <div class="spacer"></div>
+    <button class="share-btn" onclick="copyShareUrl()">📋 Share</button>
+  </nav>
+
+  <div id="sync-status" class="sync-banner" style="display:none"></div>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Illinois Tech Table Tennis Club</div>
+    <h1>April 2026<br>Tournament</h1>
+    <p class="hero-sub">Double elimination · 27 players · Three days · One champion</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">📅 Apr 1–3, 2026</div>
+      <div class="hero-meta-item">🕐 12:00 – 3:00 PM daily</div>
+      <div class="hero-meta-item">👥 27 players</div>
+      <div class="hero-meta-item">🔁 Double elimination</div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 20px 0;">
+    <div class="progress-banner">
+      <h3>Tournament Progress</h3>
+      <div class="progress-row" id="progress-chips"></div>
+      <div id="last-updated"></div>
+    </div>
+  </div>
+
+  <div class="nav-grid">
+    <a href="schedule.html" class="nav-card">
+      <div class="nav-icon">📅</div>
+      <div class="nav-title">Schedule</div>
+      <div class="nav-desc">Day-by-day match list. Enter scores here.</div>
+      <div class="nav-cta">Enter results →</div>
+    </a>
+    <a href="bracket.html" class="nav-card">
+      <div class="nav-icon">🏆</div>
+      <div class="nav-title">Bracket</div>
+      <div class="nav-desc">Visual winners + losers bracket.</div>
+      <div class="nav-cta">View bracket →</div>
+    </a>
+    <a href="results.html" class="nav-card">
+      <div class="nav-icon">🏅</div>
+      <div class="nav-title">Results</div>
+      <div class="nav-desc">Live podium, division winners.</div>
+      <div class="nav-cta">View standings →</div>
+    </a>
+  </div>
+
+  <div class="constraints-section">
+    <h2>⚠️ Scheduling Constraints</h2>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="warn-banner" style="flex:1; min-width:220px; margin-bottom:0;">
+        <span>⚠️</span>
+        <div><strong>Obafemi Omoniyi (Zuzu)</strong> — Seed #3<br>
+        <span style="color:var(--muted); font-size:0.8rem;">Available Wednesday & Friday only. WB R2 match on Friday.</span></div>
+      </div>
+      <div class="warn-banner" style="flex:1; min-width:220px; margin-bottom:0; border-color:rgba(185,28,28,0.3); background:rgba(185,28,28,0.08); color:#fca5a5;">
+        <span>⏰</span>
+        <div><strong>Pavle Veselinovic</strong> — Seed #22<br>
+        <span style="color:var(--muted); font-size:0.8rem;">Has class at 1:50 PM. Schedule his WB R1 match first on Wednesday.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="roster-section">
+    <h2>Player Roster</h2>
+    <div class="roster-grid" id="roster-grid"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="state.js"></script>
+  <script>
+    let state = loadState();
+
+    function render() {
+      const { allMatches } = computeBracket(state);
+      const rounds = ['WB-R1','WB-R2','WB-QF','WB-SF','WB-F','LB-R1','LB-R2','LB-R3','LB-R4','LB-SF','LB-F','GF'];
+      const progressEl = document.getElementById('progress-chips');
+      progressEl.innerHTML = '';
+      rounds.forEach(r => {
+        const rMatches = allMatches.filter(m => m.round === r && !m.isBye && !m.autoWinner);
+        if (rMatches.length === 0) return;
+        const done = rMatches.filter(m => state.matchResults[m.id]?.complete).length;
+        const chip = document.createElement('div');
+        chip.className = 'progress-chip ' + (done === rMatches.length ? 'done' : done > 0 ? 'active' : 'pending');
+        chip.textContent = `${ROUND_LABELS[r]} ${done}/${rMatches.length}`;
+        progressEl.appendChild(chip);
+      });
+      if (state.lastUpdated) {
+        document.getElementById('last-updated').textContent =
+          'Last updated: ' + new Date(state.lastUpdated).toLocaleString();
+      }
+    }
+
+    // Roster
+    const rg = document.getElementById('roster-grid');
+    PLAYERS.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'roster-item';
+      d.innerHTML = `
+        <span class="seed">#${p.id}</span>
+        <span class="level-dot ${p.level}"></span>
+        <span class="rname">${p.name}${p.nickname ? ` (${p.nickname})` : ''}</span>
+        ${p.note ? `<span style="font-size:0.72rem;">${p.note.split(' ')[0]}</span>` : ''}
+      `;
+      rg.appendChild(d);
+    });
+
+    // Sync status
+    onStateChange(newState => {
+      state = newState;
+      render();
+      showSyncBanner('✓ Updated from another device', false);
+    });
+
+    function showSyncBanner(msg, warn) {
+      const el = document.getElementById('sync-status');
+      el.style.display = 'flex';
+      el.className = 'sync-banner' + (warn ? ' warn' : '');
+      el.innerHTML = `<div class="sync-dot${warn?' offline':''}"></div> ${msg}`;
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    function copyShareUrl() {
+      const url = window.location.href.split('#')[0];
+      navigator.clipboard.writeText(url).then(() => showToast('Link copied! Share with your execs.', 'success'));
+    }
+
+    function showToast(msg, type='info') {
+      const t = document.createElement('div');
+      t.className = `toast ${type}`; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    render();
+  </script>
+</body>
+</html>
